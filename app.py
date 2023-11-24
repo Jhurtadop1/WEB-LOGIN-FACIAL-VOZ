@@ -1,4 +1,3 @@
-
 import zlib
 from werkzeug.utils import secure_filename
 from flask import Response
@@ -19,9 +18,6 @@ import pymongo
 import bcrypt
 from pydub import AudioSegment
 import numpy as np
-import tensorflow as tf
-import vggish_input
-import vggish_slim
 import os
 
 
@@ -290,116 +286,6 @@ for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
 #--------------------------------------------------------------------------------------------------------------------------# implementación voz
 
-# Configuración para la carga de archivos
-UPLOAD_FOLDER = 'static/voice'
-VALIDAR_UPLOAD_FOLDER = 'static/validarvoice'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['VALIDAR_UPLOAD_FOLDER'] = VALIDAR_UPLOAD_FOLDER
-
-# Cargar el modelo VGGish
-try:
-    tf.compat.v1.disable_eager_execution()
-    ckpt_path = "vggish_model.ckpt"
-    sess = tf.compat.v1.Session()
-    vggish_slim.define_vggish_slim()
-    vggish_slim.load_vggish_slim_checkpoint(sess, ckpt_path)
-except Exception as e:
-    print(f"Error al cargar el modelo VGGish: {e}")
-
-# Función para extraer características de audio
-def extract_audio_features(audio_path):
-    try:
-        features = vggish_input.wavfile_to_examples(audio_path)
-        features_embed = sess.run('vggish/embedding:0', feed_dict={'vggish/input_features:0': features})
-        return features_embed.ravel()
-    except Exception as e:
-        print(f"Error al extraer características de audio: {e}")
-        return None
-
-# Función para comparar características de audio
-def compare_audio_features(features1, features2):
-    try:
-        similarity = np.dot(features1, features2) / (np.linalg.norm(features1) * np.linalg.norm(features2))
-        return similarity
-    except Exception as e:
-        print(f"Error al comparar características de audio: {e}")
-        return 0.0
-
-# Función para convertir el archivo de audio al formato WAV
-def convert_to_wav(audio_file, output_path):
-    try:
-        audio = AudioSegment.from_file(audio_file)
-        audio.export(output_path, format="wav")
-        return True
-    except Exception as e:
-        print(f"Error al convertir archivo a WAV: {e}")
-        return False
-    
-
-@app.route('/registrarvoz')
-def registrarvoz():
-    return render_template('RegistrarVoz.html')
-    
-@app.route('/uploadRegistrar', methods=['POST'])
-def upload_registrar():
-    # Obtener el nombre de usuario desde el formulario
-    username = request.form.get('username')
-
-    # Validar si el nombre de usuario existe en la base de datos
-    if db.users.find_one({"name": username}):
-        # El usuario existe, proceder con la lógica de grabación y almacenamiento de audio
-        audio_file = request.files['audio']
-
-        # Convertir el archivo de audio al formato WAV antes de guardarlo
-        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav')
-        convert_to_wav(audio_file, audio_path)
-
-        return jsonify({"message": "Voz registrada correctamente : {}".format(username)})
-    else:
-        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de grabar el audio."})
-
-@app.route('/checkUserExistence')
-def check_user_existence():
-    # Verificar la existencia del usuario en la base de datos
-    username = request.args.get('username')
-    user_exists = bool(db.users.find_one({"name": username}))
-    return jsonify({"exists": user_exists})
-
-@app.route('/validarvoz')
-
-def validarvoz():
-    return render_template('ValidarVoz.html')
-
-@app.route('/compareAndStoreValidarVoice', methods=['POST'])
-def compare_and_store_validar_voice():
-    # Obtener el nombre de usuario desde el formulario
-    username = request.form.get('username')
-
-    # Validar si el nombre de usuario existe en la base de datos
-    if db.users.find_one({"name": username}):
-        # El usuario existe, proceder con la lógica de comparación y almacenamiento en validarvoice
-        audio_file = request.files['audio']
-
-        # Guardar el archivo de audio en la carpeta 'static/validarvoice' con el nombre del usuario
-        audio_path_validar = os.path.join(app.config['VALIDAR_UPLOAD_FOLDER'], f'{username}.wav')
-        convert_to_wav(audio_file, audio_path_validar)
-
-        # Extraer características de audio de ambas grabaciones
-        features_embed_voice1 = extract_audio_features(audio_path_validar)
-        features_embed_voice2 = extract_audio_features(os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav'))
-
-        if features_embed_voice1 is not None and features_embed_voice2 is not None:
-            # Comparar características de audio
-            similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
-
-            # Determinar si las voces coinciden o no
-            if similarity > 0.8:
-                # Establecer la sesión del usuario y mostrar un mensaje de bienvenida en la misma página
-                session["user_id"] = username
-            if authentication_successful:  # Si la autenticación tiene éxito
-                return jsonify({"message": "Bienvenido", "username": username})
-    else:
-        return jsonify({"message": "La voz no coincide."})
 
 # programa principal ****************************************
 if __name__=='__main__':  
