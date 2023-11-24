@@ -57,6 +57,11 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+
+@app.route('/')
+def index():
+    return "<h1>Corriendo servidor Flask</h1>"
+
 @app.route("/")
 @login_required
 def home():
@@ -396,5 +401,10 @@ def compare_and_store_validar_voice():
                 return jsonify({"message": "Bienvenido", "username": username})
     else:
         return jsonify({"message": "La voz no coincide."})
-if __name__ == '__main__':
-    app.run()
+pip install tensorflow==2.6.0
+
+# programa principal ****************************************
+if __name__=='__main__':  
+    app.run(debug=False)    
+#, port=5000
+
