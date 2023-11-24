@@ -35,9 +35,9 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
-client = pymongo.MongoClient("mongodb://localhost:27017")
-db = client.get_database('login')
-users = db.users
+#client = pymongo.MongoClient("mongodb://localhost:27017")
+#db = client.get_database('login')
+#users = db.users
 
 # Ensure responses aren't cached
 @app.after_request
@@ -401,7 +401,6 @@ def compare_and_store_validar_voice():
                 return jsonify({"message": "Bienvenido", "username": username})
     else:
         return jsonify({"message": "La voz no coincide."})
-pip install tensorflow==2.6.0
 
 # programa principal ****************************************
 if __name__=='__main__':  
