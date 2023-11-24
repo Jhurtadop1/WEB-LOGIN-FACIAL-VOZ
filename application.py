@@ -1,4 +1,3 @@
-
 import zlib
 from werkzeug.utils import secure_filename
 from flask import Response
@@ -34,7 +33,8 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
-client = pymongo.MongoClient("mongodb://localhost:27017")
+client = pymongo.MongoClient(
+    "mongodb+srv://hugo:hugo@cluster0.zdsz6w8.mongodb.net/")
 db = client.get_database('login')
 users = db.users
 
@@ -396,4 +396,4 @@ def compare_and_store_validar_voice():
     else:
         return jsonify({"message": "La voz no coincide."})
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
