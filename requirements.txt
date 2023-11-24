@@ -49,12 +49,6 @@ resampy==0.4.2
 rsa==4.9
 scipy==1.11.4
 six==1.16.0
-tensorboard
-tensorboard-data-server
-tensorflow
-tensorflow-estimator
-tensorflow-intel
-tensorflow-io-gcs-filesystem
 termcolor
 tf-slim
 typing_extensions==4.8.0
