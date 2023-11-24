@@ -50,7 +50,7 @@ resampy==0.4.2
 rsa==4.9
 six==1.16.0
 soundfile==0.12.1
-pip install tensorflow==2.6.0
+tensorflow==2.6.0
 tensorboard==2.15.1
 tensorboard-data-server==0.7.2
 tensorflow-estimator==2.15.0
