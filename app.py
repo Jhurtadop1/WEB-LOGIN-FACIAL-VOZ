@@ -30,9 +30,11 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
-#client = pymongo.MongoClient("mongodb://localhost:27017")
-#db = client.get_database('login')
-#users = db.users
+client = pymongo.MongoClient(
+    "mongodb+srv://hugo:hugo@cluster0.zdsz6w8.mongodb.net/")
+
+db = client.get_database('login')
+users = db.users
 
 # Ensure responses aren't cached
 @app.after_request
@@ -57,10 +59,7 @@ Session(app)
 def index():
     return "<h1>Corriendo servidor Flask</h1>"
 
-@app.route("/")
-@login_required
-def home():
-    return redirect("/home")
+
 
 
 @app.route("/home")
