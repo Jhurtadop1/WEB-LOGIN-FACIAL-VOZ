@@ -2,7 +2,6 @@
 import zlib
 from werkzeug.utils import secure_filename
 from flask import Response
-import mysql.connector as mysql
 import cv2
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_session import Session
