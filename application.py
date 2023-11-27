@@ -79,41 +79,33 @@ def login():
 
     # Forget any user_id
     session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
+    
     if request.method == "POST":
-
-        # Assign inputs to variables
         input_username = request.form.get("username")
         input_password = request.form.get("password")
 
-        # Ensure username was submitted
         if not input_username:
-            return render_template("login.html", messager=1)
+            return render_template("login.html", messager=1)  # Mensaje de usuario no ingresado
 
-        # Ensure password was submitted
         elif not input_password:
-            return render_template("login.html", messager=2)
+            return render_template("login.html", messager=2)  # Mensaje de contraseña no ingresada
 
-        # Query database for username
         name_found = users.find_one({"name": input_username})
+
         if name_found:
             name_val = name_found['name']
             passwordcheck = name_found['password']
 
             if bcrypt.checkpw(input_password.encode('utf-8'), passwordcheck):
-                # Remember which user has logged in
                 session["user_id"] = name_val
-                # Redirect user to home page
                 return redirect("/")
-
             else:
-                return render_template("login.html", messager=3)
-
-
-    # User reached route via GET (as by clicking a link or via redirect)
+                return render_template("login.html", messager=3)  # Mensaje de contraseña incorrecta
+        else:
+            return render_template("login.html", messager=4)  # Mensaje de usuario no encontrado
     else:
         return render_template("login.html")
+    
 
 @app.route("/success")
 def success():
@@ -398,4 +390,3 @@ def compare_and_store_validar_voice():
 
 if __name__ == '__main__':
     app.run()
-
