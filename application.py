@@ -1,3 +1,4 @@
+
 import zlib
 from werkzeug.utils import secure_filename
 from flask import Response
@@ -22,6 +23,10 @@ import tensorflow as tf
 import vggish_input
 import vggish_slim
 import os
+
+
+
+
 
 
 
@@ -109,11 +114,6 @@ def login():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
-
-
-@app.route("/success_voice")
-def success_voice():
-    return render_template("success_voice.html")
 
 @app.route("/success")
 def success():
@@ -361,7 +361,6 @@ def check_user_existence():
     return jsonify({"exists": user_exists})
 
 @app.route('/validarvoz')
-
 def validarvoz():
     return render_template('ValidarVoz.html')
 
@@ -388,12 +387,14 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-            if similarity > 0.8:
-                # Establecer la sesión del usuario y mostrar un mensaje de bienvenida en la misma página
-                session["user_id"] = username
-            if authentication_successful:  # Si la autenticación tiene éxito
-                return jsonify({"message": "Bienvenido", "username": username})
+            if similarity > 0.8:  # Ajustar el umbral según sea necesario
+                return jsonify({"message": f"Bienvenido {username}"})
+            else:
+                return jsonify({"message": "La voz no coincide."})
+        else:
+            return jsonify({"message": "Error al procesar características de audio."})
     else:
-        return jsonify({"message": "La voz no coincide."})
+        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de iniciar sesión."})
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
