@@ -5,11 +5,19 @@
 {% endblock %}
 
 {% block main %}
-
- <div  class="mainlogin" style="position:relative;width: 400px;left:0px;background:white;height: 530px;box-shadow: black 12px 19px 19px;border-radius: 40px">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+ <div  class="mainlogin" style="position:relative;width: 400px;left:0px;background:white;height: 590px;box-shadow: black 12px 19px 19px;border-radius: 40px">
 <br>
 <br>
-<center><b style="font-size: 25px;"><h3 style="color : black;width:150px;border-radius: 40px" >Log In</h3></b><br></center>
+<center>
+  <b>
+      <span style="color: black; font-size: 30px;">Iniciar Sesión</span>
+      <b></b>
+  </b>
+  <br>
+</b>
+<br>
+</center>
 
 
 <form action="/login" method="post">
@@ -62,12 +70,16 @@
  {% endif %}
  <br>
  —————— Ó ——————<br><br>
-    <button class="btn btn-success" id ="hoverinbtn" style="border-radius:50px;width:200px;background-color: black !important;"><a href="/facereg">Autenticacion por rostro</a></button><br>
+    <button class="btn btn-success" id ="hoverinbtn" style="border-radius:60px;width:230px;background-color: black !important;"><i class="fa-regular fa-face-smile" style="color: #ffffff;"></i> <a href="/facereg">Autenticación por rostro</a></button><br>
     <br>
-    <button class="btn btn-success" id ="hoverinbtn" style="border-radius:50px;width:200px;background-color: black !important;"><a href="/validarvoz">Autenticacion por voz</a></button><br>
+    <button class="btn btn-success" id ="hoverinbtn" style="border-radius:60px;width:230px;background-color: black !important;"><i class="fa-solid fa-microphone-lines"></i> <a href="/validarvoz">Autenticación por voz</a></button><br>
     
 <br>
   <button class="btn btn-success" type="submit"  id ="hoverinbtn" style="border-radius:50px;width:350px;height:50px;background-color: #0575E6 !important;">Iniciar Sesion</button>
+  <br>
+  
+  <br>
+<button class="btn btn-success" type="submit"  id ="hoverinbtn" style="border-radius:50px;width:350px;height:50px;background-color: #0575E6 !important;">Registrarse</button>
 </form>
 <br>
 <br>
