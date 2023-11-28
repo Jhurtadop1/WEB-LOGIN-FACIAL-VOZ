@@ -70,15 +70,15 @@ def home():
 @app.route("/home")
 @login_required
 def index():
-    return render_template("index.html")
-
+    if "user_id" in session:
+        username = session["user_id"]
+        return render_template("index.html", username=username)
+    else:
+        return redirect(url_for('login'))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
-
-    # Forget any user_id
-    session.clear()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
@@ -105,7 +105,7 @@ def login():
                 # Remember which user has logged in
                 session["user_id"] = name_val
                 # Redirect user to home page
-                return redirect("/")
+                return redirect(url_for('index'))
 
             else:
                 return render_template("login.html", messager=3)
@@ -115,7 +115,6 @@ def login():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
-
 @app.route("/success")
 def success():
 
@@ -123,7 +122,6 @@ def success():
 @app.route("/logout")
 def logout():
     """Log user out"""
-
     # Forget any user_id
     session.clear()
 
@@ -151,10 +149,11 @@ def register():
         elif not input_password:
             return render_template("register.html", messager=2)
 
-        # Ensure passwsord confirmation was submitted
+        # Ensure password confirmation was submitted
         elif not input_confirmation:
             return render_template("register.html", messager=4)
 
+        # Check if passwords match
         elif not input_password == input_confirmation:
             return render_template("register.html", messager=3)
 
@@ -163,12 +162,10 @@ def register():
         if user_found:
             return render_template("register.html", messager=5)
 
-        # Ensure username is not already taken
-
-        # Query database to insert new user
+        # Insert new user into the database
         else:
             hashed = bcrypt.hashpw(input_password.encode('utf-8'), bcrypt.gensalt())
-            user_input = {'name': input_username,'password': hashed}
+            user_input = {'name': input_username, 'password': hashed}
             users.insert_one(user_input)
 
             new_user = users.find_one({'name': input_username})
@@ -180,12 +177,11 @@ def register():
             flash(f"Registered as {input_username}")
 
             # Redirect user to homepage
-            return redirect("/")
+            return redirect("index.html")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
-
 
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
@@ -388,14 +384,11 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-            if similarity > 0.8:  # Ajustar el umbral según sea necesario
-                return jsonify({"message": f"Bienvenido, {username}."})
-            else:
-                return jsonify({"message": "La voz no coincide."})
-        else:
-            return jsonify({"message": "Error al procesar características de audio."})
+        if similarity > 0.8:  # Ajustar el umbral según sea necesario
+            session["user_id"] = username  # Establecer la sesión para el usuario
+        return redirect(url_for('success'))  # Redirigir al usuario a success.html
     else:
-        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de iniciar sesión."})
+        return jsonify({"message": "La voz no coincide."})
 
 if __name__ == '__main__':
     app.run()
