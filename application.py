@@ -79,33 +79,42 @@ def login():
 
     # Forget any user_id
     session.clear()
-    
+
+    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
+
+        # Assign inputs to variables
         input_username = request.form.get("username")
         input_password = request.form.get("password")
 
+        # Ensure username was submitted
         if not input_username:
-            return render_template("login.html", messager=1)  # Mensaje de usuario no ingresado
+            return render_template("login.html", messager=1)
 
+        # Ensure password was submitted
         elif not input_password:
-            return render_template("login.html", messager=2)  # Mensaje de contraseña no ingresada
+            return render_template("login.html", messager=2)
 
+        # Query database for username
         name_found = users.find_one({"name": input_username})
-
         if name_found:
             name_val = name_found['name']
             passwordcheck = name_found['password']
 
             if bcrypt.checkpw(input_password.encode('utf-8'), passwordcheck):
+                # Remember which user has logged in
                 session["user_id"] = name_val
+                # Redirect user to home page
                 return redirect("/")
+
             else:
-                return render_template("login.html", messager=3)  # Mensaje de contraseña incorrecta
+                return render_template("login.html", messager=3)
         else:
             return render_template("login.html", messager=4)  # Mensaje de usuario no encontrado
+
+    # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
-    
 
 @app.route("/success")
 def success():
@@ -195,7 +204,7 @@ def facereg():
 
         decoded_data = b64decode(uncompressed_data)
 
-        new_image_handle = open('./static/validarface/' + str(id_) + '.jpg', 'wb')
+        new_image_handle = open('./static/face/unknown-' + str(id_) + '.jpg', 'wb')
 
         new_image_handle.write(decoded_data)
         new_image_handle.close()
@@ -209,7 +218,7 @@ def facereg():
         user_face_encoding = face_recognition.face_encodings(image_of_user)[0]
 
         unknown_image = face_recognition.load_image_file(
-            './static/validarface/' + str(id_) + '.jpg')
+            './static/face/unknown-' + str(id_) + '.jpg')
         try:
 
             unknown_image = cv2.cvtColor(unknown_image, cv2.COLOR_BGR2RGB)
@@ -380,7 +389,7 @@ def compare_and_store_validar_voice():
 
             # Determinar si las voces coinciden o no
             if similarity > 0.8:  # Ajustar el umbral según sea necesario
-                return jsonify({"message": f"Bienvenido {username}"})
+                return jsonify({"message": f"Bienvenido, {username}."})
             else:
                 return jsonify({"message": "La voz no coincide."})
         else:
