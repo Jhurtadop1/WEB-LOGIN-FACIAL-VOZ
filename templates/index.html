@@ -1,12 +1,20 @@
 {% extends "layout.html" %}
 
 {% block title %}
-index
+    index
 {% endblock %}
-{% block main %}
-<body> 
- <h1 style="color:white"> Bienvenido </h1>
-</body>
 
-</html>
-{%endblock%}
+{% block main %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Resto de tus etiquetas meta y estilos CSS -->
+</head>
+<body>
+    <div id="container">
+        <!-- Mensaje de bienvenida y nombre de usuario -->
+        <h1> Biometric Login</h1>
+        <div></div>
+        <p>Hola {{ username }} <p>
+    <p>{{ message }}</p>
+{% endblock %}
