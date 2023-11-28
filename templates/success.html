@@ -1,11 +1,26 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    index
+Success
 {% endblock %}
 
 {% block main %}
-    <body>
-        <h1 style="color: white;">¡Bienvenido, {{ username }}!</h1>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Resto de tus etiquetas meta y estilos CSS -->
+</head>
+<body>
+    <div id="container">
+        <!-- Mensaje de bienvenida y nombre de usuario -->
+        <h1> Biometric Login</h1>
+        {% if 'user_id' in session %}
+            <p>Hola {{ session['user_id'] }}</p>
+        {% else %}
+            <p>No se ha iniciado sesión, la voz no coincide.</p>
+        {% endif %}
+        <!-- Resto del contenido de success.html -->
+    </div>
+</body>
+</html>
 {% endblock %}
