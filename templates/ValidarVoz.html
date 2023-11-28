@@ -159,10 +159,16 @@ index
                                 method: 'POST',
                                 body: formData
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if(response.redirected){
+                           // Redirigir a success.html si la respuesta del servidor es una redirección
+                                window.location.href = '/success';
+                            } else {
+                                return response.json();
+                            }
+                            
+                            })
                             .then(data => {
-                                // Mostrar el resultado de la comparación
-                                alert(data.message);
                             })
                             .catch(error => {
                                 console.error('Error al comparar y almacenar en validarvoice:', error);
@@ -186,10 +192,7 @@ index
                 document.getElementById('stopRecording').style.display = 'none';
                 document.getElementById('startSession').style.display = 'inline-block';
             }
-    
-            function startSession() {
-                // Esta función se llama al hacer clic en "Iniciar Sesión" después de grabar
-            }
+
         </script>
 
         <p id="error-message">Usuario no existe. Por favor, regístrese antes de grabar el audio.</p>
