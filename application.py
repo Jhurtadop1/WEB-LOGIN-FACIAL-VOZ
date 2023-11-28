@@ -218,7 +218,7 @@ def facereg():
         user_face_encoding = face_recognition.face_encodings(image_of_user)[0]
 
         unknown_image = face_recognition.load_image_file(
-            './static/validarface' + str(id_) + '.jpg')
+            './static/validarface/' + str(id_) + '.jpg')
         try:
 
             unknown_image = cv2.cvtColor(unknown_image, cv2.COLOR_BGR2RGB)
