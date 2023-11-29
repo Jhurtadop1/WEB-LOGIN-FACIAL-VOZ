@@ -23,7 +23,7 @@ import tensorflow as tf
 import vggish_input
 import vggish_slim
 import os
-
+from functools import wraps
 
 
 
@@ -182,6 +182,15 @@ def register():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
+    
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
@@ -237,9 +246,11 @@ def facereg():
 
     else:
         return render_template("camera.html")
+    
 
 
 @app.route("/facesetup", methods=["GET", "POST"])
+@login_required
 def facesetup():
     if request.method == "POST":
 
@@ -328,11 +339,23 @@ def convert_to_wav(audio_file, output_path):
         return False
     
 
+
+
+def login_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if "user_id" in session:
+            return func(*args, **kwargs)
+        else:
+            return redirect(url_for('login'))
+    return wrapper
+
 @app.route('/registrarvoz')
+@login_required
 def registrarvoz():
     return render_template('RegistrarVoz.html')
-
 @app.route('/uploadRegistrar', methods=['POST'])
+@login_required
 def upload_registrar():
     # Obtener el nombre de usuario de la sesión actual
     username = session.get('user_id')
@@ -392,3 +415,4 @@ def compare_and_store_validar_voice():
 
 if __name__ == '__main__':
     app.run()
+
