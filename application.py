@@ -26,6 +26,10 @@ import os
 
 
 
+
+
+
+
 # Configure application
 app = Flask(__name__)
 # configure flask-socketio
@@ -327,24 +331,24 @@ def convert_to_wav(audio_file, output_path):
 @app.route('/registrarvoz')
 def registrarvoz():
     return render_template('RegistrarVoz.html')
-    
+
 @app.route('/uploadRegistrar', methods=['POST'])
 def upload_registrar():
-    # Obtener el nombre de usuario desde el formulario
-    username = request.form.get('username')
+    # Obtener el nombre de usuario de la sesión actual
+    username = session.get('user_id')
 
-    # Validar si el nombre de usuario existe en la base de datos
-    if db.users.find_one({"name": username}):
-        # El usuario existe, proceder con la lógica de grabación y almacenamiento de audio
+    # Validar si hay un usuario en sesión
+    if username:
+        # Proceder con la lógica de grabación y almacenamiento de audio
         audio_file = request.files['audio']
 
         # Convertir el archivo de audio al formato WAV antes de guardarlo
         audio_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav')
         convert_to_wav(audio_file, audio_path)
 
-        return jsonify({"message": "Voz registrada correctamente : {}".format(username)})
+        return jsonify({"message": f"Voz registrada correctamente para: {username}"})
     else:
-        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de grabar el audio."})
+        return jsonify({"message": "No hay un usuario en sesión. Por favor, inicie sesión para registrar su voz."})
 
 @app.route('/checkUserExistence')
 def check_user_existence():
@@ -388,4 +392,5 @@ def compare_and_store_validar_voice():
 
 if __name__ == '__main__':
     app.run()
+
 
