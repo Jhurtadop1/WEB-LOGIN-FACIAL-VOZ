@@ -1,8 +1,9 @@
 {% extends "layout.html" %}
 
 {% block title %}
-index
+    Registrar Voz
 {% endblock %}
+
 {% block main %}
 <!DOCTYPE html>
 <html lang="en">
@@ -32,15 +33,13 @@ index
         }
 
         #container {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    margin: 0 50px; /* Added margin of 50px on the left and right */
-    height: 100%;
-}
-
-
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 0 50px; /* Added margin of 50px on the left and right */
+            height: 100%;
+        }
 
         h1 {
             color: #333;
@@ -54,7 +53,7 @@ index
         }
 
         input {
-            width: 60%; /* Adjusted width to 60% */
+            width: 60%;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -80,13 +79,7 @@ index
         }
 
         button:hover {
-            background-color:#0060c1;
-        }
-
-        .vector-icon {
-            width: 80px;
-            height: 80px;
-            margin: 20px 0;
+            background-color: #0060c1;
         }
 
         #error-message {
@@ -94,27 +87,26 @@ index
             display: none;
             margin-top: 20px;
         }
-
-        
     </style>
 </head>
 <body>
     <div id="container">
-    <h1>Vamos a registrar tu voz</h1>
-    <div id="alert-message" class="alert" style="display: none;"></div>
-    <br>
-    <br>
-    <label for="username">Nombre de usuario</label>
-    <input type="text" id="username" name="username" maxlength="20" style="width: 200px;" required>
-    <br>
-    <br>
-    <h3>Presione el botón "Iniciar grabación"</h3>
-    <h3>Luego diga "Mi nombre es ...." y espera unos segundos.</h3>
+        <h1>Vamos a registrar tu voz</h1>
+        <div id="alert-message" class="alert" style="display: none;"></div>
+        <br>
+        <br>
+        <br>
+        <!-- Eliminé el campo de ingreso de usuario -->
+        <h3>Presione el botón "Iniciar grabación"</h3>
+        <h3>Luego diga "Mi nombre es ...." y espera unos segundos.</h3>
 
-    <button id="startRecording" onclick="startRecording()">Iniciar grabación</button>
-    <button id="stopRecording" style="display:none" onclick="stopRecording()">Detener grabación</button>
-    <br>
-    <br>
+        <button id="startRecording" onclick="startRecording()">Iniciar grabación</button>
+        <button id="stopRecording" style="display:none" onclick="stopRecording()">Detener grabación</button>
+        <br>
+        <br>
+        <p id="error-message" style="color: rgb(255, 0, 21); display: none;">Usuario no existe. Por favor, regístrese antes de grabar el audio.</p>
+    </div>
+
     <script>
         let recorder;
         let stopTimeout;
@@ -123,24 +115,16 @@ index
             // Restablecer el mensaje de error al iniciar una nueva grabación
             document.getElementById('error-message').style.display = 'none';
 
-            // Obtener el nombre de usuario desde el formulario
-            const username = document.getElementById('username').value;
+            // Verificar la existencia de la sesión del usuario
+            const username = "{{ session['user_id'] }}"; // Obtener el nombre de usuario de la sesión
 
-            // Verificar la existencia del usuario antes de comenzar la grabación
-            fetch(`/checkUserExistence?username=${username}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.exists) {
-                        // El usuario existe, proceder con la lógica de grabación y almacenamiento de audio
-                        startRecordingLogic();
-                    } else {
-                        // Mostrar mensaje de error si el usuario no existe
-                        document.getElementById('error-message').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al verificar la existencia del usuario:', error);
-                });
+            if (username) {
+                // El usuario existe en la sesión, proceder con la lógica de grabación
+                startRecordingLogic();
+            } else {
+                // Mostrar mensaje de error si no hay usuario en la sesión
+                document.getElementById('error-message').style.display = 'block';
+            }
         }
 
         function startRecordingLogic() {
@@ -163,7 +147,7 @@ index
                         let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                         let formData = new FormData();
                         formData.append('audio', audioBlob, 'audio.wav');
-                        formData.append('username', document.getElementById('username').value);
+                        formData.append('username', "{{ session['user_id'] }}"); // Enviar el nombre de usuario de la sesión
 
                         // Enviar el archivo al servidor
                         fetch('/uploadRegistrar', {
@@ -198,8 +182,6 @@ index
             document.getElementById('stopRecording').style.display = 'none';
         }
     </script>
-    <p id="error-message" style="color: rgb(255, 0, 21); display: none;">Usuario no existe. Por favor, regístrese antes de grabar el audio.</p>
-</div>
 </body>
 </html>
-{%endblock%}
+{% endblock %}
