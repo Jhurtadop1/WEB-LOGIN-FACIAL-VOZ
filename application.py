@@ -406,13 +406,22 @@ def compare_and_store_validar_voice():
             # Comparar características de audio
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
-            # Determinar si las voces coinciden o no
         if similarity > 0.8:  # Ajustar el umbral según sea necesario
-            session["user_id"] = username  # Establecer la sesión para el usuario
-        return redirect(url_for('success'))  # Redirigir al usuario a success.html
+            # Si la validación de voz es exitosa, no establecer la sesión aquí
+            return redirect(url_for('success'))  # Redirigir al usuario a success.html
+        else:
+            return jsonify({"message": "La voz no coincide."})
     else:
-        return jsonify({"message": "La voz no coincide."})
+            return jsonify({"message": "El usuario no existe."})
 
+@app.route('/success')
+@login_required
+def success():
+    if "user_id" in session:
+        # Si hay una sesión activa, mostrar la página de éxito
+        return render_template("success.html", username=session["user_id"])
+    else:
+        # Si no hay sesión activa, redirigir al inicio de sesión
+        return redirect(url_for('validarvoz'))
 if __name__ == '__main__':
     app.run()
-
