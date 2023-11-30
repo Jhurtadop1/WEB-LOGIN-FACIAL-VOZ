@@ -26,10 +26,6 @@ import os
 from functools import wraps
 
 
-
-
-
-
 # Configure application
 app = Flask(__name__)
 # configure flask-socketio
