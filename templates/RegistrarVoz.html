@@ -5,8 +5,8 @@
 {% endblock %}
 
 {% block main %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <!DOCTYPE html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -113,23 +113,20 @@
         let stopTimeout;
 
         function startRecording() {
-    // Restablecer el mensaje de error al iniciar una nueva grabación
-    document.getElementById('error-message').style.display = 'none';
+            // Restablecer el mensaje de error al iniciar una nueva grabación
+            document.getElementById('error-message').style.display = 'none';
 
-    // Ocultar el botón de detener grabación
-    document.getElementById('stopRecording').style.display = 'none';
+            // Verificar la existencia de la sesión del usuario
+            const username = "{{ session['user_id'] }}"; // Obtener el nombre de usuario de la sesión
 
-    // Verificar la existencia de la sesión del usuario
-    const username = "{{ session['user_id'] }}"; // Obtener el nombre de usuario de la sesión
-
-    if (username) {
-        // El usuario existe en la sesión, proceder con la lógica de grabación
-        startRecordingLogic();
-    } else {
-        // Mostrar mensaje de error si no hay usuario en la sesión
-        document.getElementById('error-message').style.display = 'block';
-    }
-}
+            if (username) {
+                // El usuario existe en la sesión, proceder con la lógica de grabación
+                startRecordingLogic();
+            } else {
+                // Mostrar mensaje de error si no hay usuario en la sesión
+                document.getElementById('error-message').style.display = 'block';
+            }
+        }
 
         function startRecordingLogic() {
             console.log('Iniciando grabación...');
@@ -170,29 +167,27 @@
                         });
                     };
 
-                    recorder.start();
-            document.getElementById('startRecording').style.display = 'none';
-            // Oculta el botón de detener grabación y muestra el ícono de grabación
-            document.getElementById('stopRecording').style.display = 'none'; // Oculta el botón de detener grabación
-            document.getElementById('recordingIcon').style.display = 'inline-block'; // Muestra el ícono de grabación
-
-            stopTimeout = setTimeout(function() {
-                stopRecording();
-                document.getElementById('recordingIcon').style.display = 'none'; // Oculta el ícono de grabación después de detener la grabación
-            }, 6000);
-        })
-                .catch(function(err) {
+                        recorder.start();
+                    document.getElementById('startRecording').style.display = 'none';
+                    document.getElementById('stopRecording').style.display = 'none';
+                    document.getElementById('recordingIcon').style.display = 'inline-block'; // Muestra el ícono de grabación
+                    
+                    stopTimeout = setTimeout(function(){
+                        stopRecording();
+                        document.getElementById('recordingIcon').style.display = 'none';
+                    }, 6000); // Detener la grabación después de 6 segundos
+                })
+                        .catch(function(err) {
                     console.error('Error al acceder al micrófono: ', err);
                 });
         }
 
         function stopRecording() {
-            recorder.stop();
-            document.getElementById('startRecording').style.display = 'inline-block';
-            document.getElementById('stopRecording').style.display = 'none';
-            // Oculta el ícono de grabación al detener la grabación
-            document.getElementById('recordingIcon').style.display = 'none';
-        }
+                recorder.stop();
+                document.getElementById('startRecording').style.display = 'inline-block';
+                document.getElementById('stopRecording').style.display = 'none';
+                document.getElementById('startSession').style.display = 'inline-block';
+            }
     </script>
 </body>
 </html>
