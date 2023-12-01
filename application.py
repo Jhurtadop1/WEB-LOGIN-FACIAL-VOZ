@@ -1,420 +1,194 @@
-
-import zlib
-from werkzeug.utils import secure_filename
-from flask import Response
-import cv2
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
-from flask_session import Session
-from tempfile import mkdtemp
-from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
-from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
-import face_recognition
-from PIL import Image
-from base64 import b64encode, b64decode
-import re
-from helpers import apology, login_required
-from flask import Flask, render_template, request, url_for, redirect, session
-import pymongo
-import bcrypt
-from pydub import AudioSegment
-import numpy as np
-import tensorflow as tf
-import vggish_input
-import vggish_slim
-import os
-from functools import wraps
-
-
-
-
-
-
-# Configure application
-app = Flask(__name__)
-# configure flask-socketio
-
-# Ensure templates are auto-reloaded
-app.config["TEMPLATES_AUTO_RELOAD"] = True
-
-
-client = pymongo.MongoClient(
-    "mongodb+srv://hugo:hugo@cluster0.zdsz6w8.mongodb.net/")
-db = client.get_database('login')
-users = db.users
-
-# Ensure responses aren't cached
-@app.after_request
-def after_request(response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Expires"] = 0
-    response.headers["Pragma"] = "no-cache"
-    return response
-
-
-# Custom filter
-
-
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
-
-@app.route("/")
-@login_required
-def home():
-    return redirect("/home")
-
-
-@app.route("/home")
-@login_required
-def index():
-    if "user_id" in session:
-        username = session["user_id"]
-        return render_template("index.html", username=username)
-    else:
-        return redirect(url_for('login'))
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Log user in"""
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Assign inputs to variables
-        input_username = request.form.get("username")
-        input_password = request.form.get("password")
-
-        # Ensure username was submitted
-        if not input_username:
-            return render_template("login.html", messager=1)
-
-        # Ensure password was submitted
-        elif not input_password:
-            return render_template("login.html", messager=2)
-
-        # Query database for username
-        name_found = users.find_one({"name": input_username})
-        if name_found:
-            name_val = name_found['name']
-            passwordcheck = name_found['password']
-
-            if bcrypt.checkpw(input_password.encode('utf-8'), passwordcheck):
-                # Remember which user has logged in
-                session["user_id"] = name_val
-                # Redirect user to home page
-                return redirect(url_for('index'))
-
-            else:
-                return render_template("login.html", messager=3)
-        else:
-            return render_template("login.html", messager=4)  # Mensaje de usuario no encontrado
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("login.html")
-@app.route("/success")
-def success():
-
-    return render_template("success.html")
-@app.route("/logout")
-def logout():
-    """Log user out"""
-    # Forget any user_id
-    session.clear()
-
-    # Redirect user to login form
-    return redirect("/")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    """Register user"""
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Assign inputs to variables
-        input_username = request.form.get("username")
-        input_password = request.form.get("password")
-        input_confirmation = request.form.get("confirmation")
-
-        # Ensure username was submitted
-        if not input_username:
-            return render_template("register.html", messager=1)
-
-        # Ensure password was submitted
-        elif not input_password:
-            return render_template("register.html", messager=2)
-
-        # Ensure password confirmation was submitted
-        elif not input_confirmation:
-            return render_template("register.html", messager=4)
-
-        # Check if passwords match
-        elif not input_password == input_confirmation:
-            return render_template("register.html", messager=3)
-
-        # Query database for username
-        user_found = users.find_one({"name": input_username})
-        if user_found:
-            return render_template("register.html", messager=5)
-
-        # Insert new user into the database
-        else:
-            hashed = bcrypt.hashpw(input_password.encode('utf-8'), bcrypt.gensalt())
-            user_input = {'name': input_username, 'password': hashed}
-            users.insert_one(user_input)
-
-            new_user = users.find_one({'name': input_username})
-            if new_user:
-                # Keep newly registered user logged in
-                session["user_id"] = new_user["name"]
-
-            # Flash info for the user
-            flash(f"Registered as {input_username}")
-
-            # Redirect user to homepage
-            return redirect("/")
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("register.html")
-    
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("user_id") is None:
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated_function
-
-
-@app.route("/facereg", methods=["GET", "POST"])
-def facereg():
-    session.clear()
-    if request.method == "POST":
-
-        encoded_image = (request.form.get("pic") + "==").encode('utf-8')
-        username = request.form.get("name")
-
-
-
-        id_ = username
-        compressed_data = zlib.compress(encoded_image, 5)
-
-        uncompressed_data = zlib.decompress(compressed_data)
-
-        decoded_data = b64decode(uncompressed_data)
-
-        new_image_handle = open('./static/validarface/' + str(id_) + '.jpg', 'wb')
-
-        new_image_handle.write(decoded_data)
-        new_image_handle.close()
-        try:
-            image_of_user = face_recognition.load_image_file(
-                './static/face/' + str(id_) + '.jpg')
-        except:
-            return render_template("camera.html", message=5)
-
-        image_of_user = cv2.cvtColor(image_of_user, cv2.COLOR_BGR2RGB)
-        user_face_encoding = face_recognition.face_encodings(image_of_user)[0]
-
-        unknown_image = face_recognition.load_image_file(
-            './static/validarface/' + str(id_) + '.jpg')
-        try:
-
-            unknown_image = cv2.cvtColor(unknown_image, cv2.COLOR_BGR2RGB)
-            unknown_face_encoding = face_recognition.face_encodings(unknown_image)[0]
-        except:
-            return render_template("camera.html", message=2)
-
-        #  compare faces
-        results = face_recognition.compare_faces(
-            [user_face_encoding], unknown_face_encoding)
-        print(results)
-
-        if results[0]:
-            user_found = users.find_one({"name": id_})
-            session["user_id"] = user_found["name"]
-            return render_template("success.html", username=user_found["name"])
-        else:
-            return render_template("camera.html", message=3)
-
-
-    else:
-        return render_template("camera.html")
-    
-
-
-@app.route("/facesetup", methods=["GET", "POST"])
-@login_required
-def facesetup():
-    if request.method == "POST":
-
-        encoded_image = (request.form.get("pic") + "==").encode('utf-8')
-        user_name=session["user_id"]
-        user_found = users.find_one({"name":user_name })
-        id_ = user_found["name"]
-
-        # id_ = db.execute("SELECT id FROM users WHERE id = :user_id", user_id=session["user_id"])[0]["id"]
-        compressed_data = zlib.compress(encoded_image, 5)
-
-        uncompressed_data = zlib.decompress(compressed_data)
-        decoded_data = b64decode(uncompressed_data)
-
-        new_image_handle = open('./static/face/' + str(id_) + '.jpg', 'wb')
-
-        new_image_handle.write(decoded_data)
-        new_image_handle.close()
-        image_of_user = face_recognition.load_image_file(
-            './static/face/' + str(id_) + '.jpg')
-        try:
-            user_face_encoding = face_recognition.face_encodings(image_of_user)[0]
-        except:
-            return render_template("face.html", message=1)
-        return redirect("/home")
-
-    else:
-        return render_template("face.html")
-
-
-def errorhandler(e):
-    """Handle error"""
-    if not isinstance(e, HTTPException):
-        e = InternalServerError()
-    return render_template("error.html", e=e)
-
-
-# Listen for errors
-for code in default_exceptions:
-    app.errorhandler(code)(errorhandler)
-#--------------------------------------------------------------------------------------------------------------------------# implementación voz
-
-# Configuración para la carga de archivos
-UPLOAD_FOLDER = 'static/voice'
-VALIDAR_UPLOAD_FOLDER = 'static/validarvoice'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['VALIDAR_UPLOAD_FOLDER'] = VALIDAR_UPLOAD_FOLDER
-
-# Cargar el modelo VGGish
-try:
-    tf.compat.v1.disable_eager_execution()
-    ckpt_path = "vggish_model.ckpt"
-    sess = tf.compat.v1.Session()
-    vggish_slim.define_vggish_slim()
-    vggish_slim.load_vggish_slim_checkpoint(sess, ckpt_path)
-except Exception as e:
-    print(f"Error al cargar el modelo VGGish: {e}")
-
-# Función para extraer características de audio
-def extract_audio_features(audio_path):
-    try:
-        features = vggish_input.wavfile_to_examples(audio_path)
-        features_embed = sess.run('vggish/embedding:0', feed_dict={'vggish/input_features:0': features})
-        return features_embed.ravel()
-    except Exception as e:
-        print(f"Error al extraer características de audio: {e}")
-        return None
-
-# Función para comparar características de audio
-def compare_audio_features(features1, features2):
-    try:
-        similarity = np.dot(features1, features2) / (np.linalg.norm(features1) * np.linalg.norm(features2))
-        return similarity
-    except Exception as e:
-        print(f"Error al comparar características de audio: {e}")
-        return 0.0
-
-# Función para convertir el archivo de audio al formato WAV
-def convert_to_wav(audio_file, output_path):
-    try:
-        audio = AudioSegment.from_file(audio_file)
-        audio.export(output_path, format="wav")
-        return True
-    except Exception as e:
-        print(f"Error al convertir archivo a WAV: {e}")
-        return False
-    
-
-
-
-def login_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "user_id" in session:
-            return func(*args, **kwargs)
-        else:
-            return redirect(url_for('login'))
-    return wrapper
-
-@app.route('/registrarvoz')
-@login_required
-def registrarvoz():
-    return render_template('RegistrarVoz.html')
-@app.route('/uploadRegistrar', methods=['POST'])
-@login_required
-def upload_registrar():
-    # Obtener el nombre de usuario de la sesión actual
-    username = session.get('user_id')
-
-    # Validar si hay un usuario en sesión
-    if username:
-        # Proceder con la lógica de grabación y almacenamiento de audio
-        audio_file = request.files['audio']
-
-        # Convertir el archivo de audio al formato WAV antes de guardarlo
-        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav')
-        convert_to_wav(audio_file, audio_path)
-
-        return jsonify({"message": f"Voz registrada correctamente para: {username}"})
-    else:
-        return jsonify({"message": "No hay un usuario en sesión. Por favor, inicie sesión para registrar su voz."})
-
-@app.route('/checkUserExistence')
-def check_user_existence():
-    # Verificar la existencia del usuario en la base de datos
-    username = request.args.get('username')
-    user_exists = bool(db.users.find_one({"name": username}))
-    return jsonify({"exists": user_exists})
-
-@app.route('/validarvoz')
-def validarvoz():
-    return render_template('ValidarVoz.html')
-
-@app.route('/compareAndStoreValidarVoice', methods=['POST'])
-def compare_and_store_validar_voice():
-    session.clear()
-    # Obtener el nombre de usuario desde el formulario
-    username = request.form.get('username')
-
-    # Validar si el nombre de usuario existe en la base de datos
-    if db.users.find_one({"name": username}):
-        # El usuario existe, proceder con la lógica de comparación y almacenamiento en validarvoice
-        audio_file = request.files['audio']
-
-        # Guardar el archivo de audio en la carpeta 'static/validarvoice' con el nombre del usuario
-        audio_path_validar = os.path.join(app.config['VALIDAR_UPLOAD_FOLDER'], f'{username}.wav')
-        convert_to_wav(audio_file, audio_path_validar)
-
-        # Extraer características de audio de ambas grabaciones
-        features_embed_voice1 = extract_audio_features(audio_path_validar)
-        features_embed_voice2 = extract_audio_features(os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav'))
-
-        if features_embed_voice1 is not None and features_embed_voice2 is not None:
-            # Comparar características de audio
-            similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
-
-        if similarity > 0.8:  # Ajustar el umbral según sea necesario
-            # Si la validación de voz es exitosa, no establecer la sesión aquí
-            return redirect(url_for('success'))  # Redirigir al usuario a success.html
-        else:
-            return jsonify({"message": "La voz no coincide."})
-    else:
-            return jsonify({"message": "El usuario no existe."})
-
-
-if __name__ == '__main__':
-    app.run()
+{% extends "layout.html" %}
+
+{% block title %}
+    Registrar Voz
+{% endblock %}
+
+{% block main %}
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recorder</title>
+    <style>
+        .alert {
+            padding: 20px;
+            background-color: #36f475;
+            color: white;
+            margin-bottom: 15px;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #222;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 0 50px; /* Added margin of 50px on the left and right */
+            height: 100%;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+            color: rgb(74, 74, 74);
+        }
+
+        input {
+            width: 60%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        h3 {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #0575E6;
+            color: white;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        button:hover {
+            background-color: #0060c1;
+        }
+
+        #error-message {
+            color: red;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Vamos a registrar tu voz</h1>
+        <div id="alert-message" class="alert" style="display: none;"></div>
+        <br>
+        <br>
+        <br>
+        <!-- Eliminé el campo de ingreso de usuario -->
+        <h3>Presione el botón "Iniciar grabación"</h3>
+        <h3>Luego diga "Mi nombre es ...." y espera unos segundos.</h3>
+        <i id="recordingIcon" class="fa-sharp fa-solid fa-microphone fa-beat fa-2xl" style="color: #0d59a0; display: none;"></i>
+        <button id="startRecording" onclick="startRecording()">Iniciar grabación</button>
+        <button id="stopRecording" style="display:none" onclick="stopRecording()">Detener grabación</button>
+        <br>
+        <br>
+        <p id="error-message" style="color: rgb(255, 0, 21); display: none;">Usuario no existe. Por favor, regístrese antes de grabar el audio.</p>
+    </div>
+
+    <script>
+        let recorder;
+        let stopTimeout;
+
+        function startRecording() {
+            // Restablecer el mensaje de error al iniciar una nueva grabación
+            document.getElementById('error-message').style.display = 'none';
+
+            // Verificar la existencia de la sesión del usuario
+            const username = "{{ session['user_id'] }}"; // Obtener el nombre de usuario de la sesión
+
+            if (username) {
+                // El usuario existe en la sesión, proceder con la lógica de grabación
+                startRecordingLogic();
+            } else {
+                // Mostrar mensaje de error si no hay usuario en la sesión
+                document.getElementById('error-message').style.display = 'block';
+            }
+        }
+
+        function startRecordingLogic() {
+            console.log('Iniciando grabación...');
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    // Utiliza la configuración básica
+                    recorder = new MediaRecorder(stream);
+
+                    let audioChunks = [];
+
+                    recorder.ondataavailable = function(e) {
+                        if (e.data.size > 0) {
+                            audioChunks.push(e.data);
+                        }
+                    };
+
+                    recorder.onstop = function() {
+                        let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        let formData = new FormData();
+                        formData.append('audio', audioBlob, 'audio.wav');
+                        formData.append('username', "{{ session['user_id'] }}"); // Enviar el nombre de usuario de la sesión
+
+                        // Enviar el archivo al servidor
+                        fetch('/uploadRegistrar', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Muestra el mensaje JSON devuelto por el servidor
+                            console.log(data);
+                            document.getElementById('alert-message').innerText = data.message;
+                            document.getElementById('alert-message').style.display = 'block';
+                        })
+                        .catch(error => {
+                            console.error('Error al enviar el archivo:', error);
+                        });
+                    };
+
+                        recorder.start();
+                    document.getElementById('startRecording').style.display = 'none';
+                    document.getElementById('stopRecording').style.display = 'none';
+                    document.getElementById('recordingIcon').style.display = 'inline-block'; // Muestra el ícono de grabación
+                    
+                    stopTimeout = setTimeout(function(){
+                        stopRecording();
+                        document.getElementById('recordingIcon').style.display = 'none';
+                    }, 6000); // Detener la grabación después de 6 segundos
+                })
+                        .catch(function(err) {
+                    console.error('Error al acceder al micrófono: ', err);
+                });
+        }
+
+        function stopRecording() {
+                recorder.stop();
+                document.getElementById('startRecording').style.display = 'inline-block';
+                document.getElementById('stopRecording').style.display = 'none';
+                document.getElementById('startSession').style.display = 'inline-block';
+            }
+    </script>
+</body>
+</html>
+{% endblock %}
