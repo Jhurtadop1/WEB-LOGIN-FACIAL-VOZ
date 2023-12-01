@@ -4,8 +4,8 @@
 index
 {% endblock %}
 {% block main %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <!DOCTYPE html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -178,27 +178,27 @@ index
                         };
     
                         recorder.start();
-                        document.getElementById('startRecording').style.display = 'none';
-                        document.getElementById('stopRecording').style.display = 'none';
-                        document.getElementById('startSession').style.display = 'none';
-                        document.getElementById('recordingIcon').style.display = 'inline-block'; // Muestra el ícono de grabación
-                        stopTimeout = setTimeout(function() {
-                            stopRecording();
-                            document.getElementById('recordingIcon').style.display = 'none'; // Oculta el ícono de grabación después de detener la grabación
-                        }, 6000); // Detener la grabación después de 6 segundos
-                    })
-                    .catch(function(err) {
-                        console.error('Error al acceder al micrófono: ', err);
-                    });
-            }
+                    document.getElementById('startRecording').style.display = 'none';
+                    document.getElementById('stopRecording').style.display = 'none';
+                    document.getElementById('recordingIcon').style.display = 'inline-block'; // Muestra el ícono de grabación
+                    
+                    stopTimeout = setTimeout(function(){
+                        stopRecording();
+                        document.getElementById('recordingIcon').style.display = 'none';
+                    }, 6000); // Detener la grabación después de 6 segundos
+                })
+                        .catch(function(err) {
+                    console.error('Error al acceder al micrófono: ', err);
+                });
+        }
     
             function stopRecording() {
-    recorder.stop();
-    document.getElementById('startRecording').style.display = 'none';
-    document.getElementById('stopRecording').style.display = 'none';
-    document.getElementById('startSession').style.display = 'none'; // Asegurar que permanezca oculto
-    document.getElementById('recordingIcon').style.display = 'none';
-}
+                recorder.stop();
+                document.getElementById('startRecording').style.display = 'inline-block';
+                document.getElementById('stopRecording').style.display = 'none';
+                document.getElementById('startSession').style.display = 'none';
+                document.getElementById('recordingIcon').style.display = 'none';
+            }
 
         </script>
 
