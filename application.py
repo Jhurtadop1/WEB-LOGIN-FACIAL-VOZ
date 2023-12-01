@@ -414,9 +414,9 @@ def compare_and_store_validar_voice():
     else:
             return jsonify({"message": "El usuario no existe."})
 
-@app.route('/success')
+@app.route('/success2')
 @login_required
-def success():
+def success2():
     if "user_id" in session:
         # Si hay una sesión activa, mostrar la página de éxito
         return render_template("success.html", username=session["user_id"])
