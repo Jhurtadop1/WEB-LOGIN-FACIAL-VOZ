@@ -23,7 +23,7 @@ import tensorflow as tf
 import vggish_input
 import vggish_slim
 import os
-from functools import wraps
+
 
 
 
@@ -70,15 +70,15 @@ def home():
 @app.route("/home")
 @login_required
 def index():
-    if "user_id" in session:
-        username = session["user_id"]
-        return render_template("index.html", username=username)
-    else:
-        return redirect(url_for('login'))
+    return render_template("index.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
+
+    # Forget any user_id
+    session.clear()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
@@ -105,7 +105,7 @@ def login():
                 # Remember which user has logged in
                 session["user_id"] = name_val
                 # Redirect user to home page
-                return redirect(url_for('index'))
+                return redirect("/")
 
             else:
                 return render_template("login.html", messager=3)
@@ -115,6 +115,7 @@ def login():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
+
 @app.route("/success")
 def success():
 
@@ -122,6 +123,7 @@ def success():
 @app.route("/logout")
 def logout():
     """Log user out"""
+
     # Forget any user_id
     session.clear()
 
@@ -149,11 +151,10 @@ def register():
         elif not input_password:
             return render_template("register.html", messager=2)
 
-        # Ensure password confirmation was submitted
+        # Ensure passwsord confirmation was submitted
         elif not input_confirmation:
             return render_template("register.html", messager=4)
 
-        # Check if passwords match
         elif not input_password == input_confirmation:
             return render_template("register.html", messager=3)
 
@@ -162,10 +163,12 @@ def register():
         if user_found:
             return render_template("register.html", messager=5)
 
-        # Insert new user into the database
+        # Ensure username is not already taken
+
+        # Query database to insert new user
         else:
             hashed = bcrypt.hashpw(input_password.encode('utf-8'), bcrypt.gensalt())
-            user_input = {'name': input_username, 'password': hashed}
+            user_input = {'name': input_username,'password': hashed}
             users.insert_one(user_input)
 
             new_user = users.find_one({'name': input_username})
@@ -177,12 +180,13 @@ def register():
             flash(f"Registered as {input_username}")
 
             # Redirect user to homepage
-            return redirect("index.html")
+            return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
-    
+
+
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
     session.clear()
@@ -191,6 +195,8 @@ def facereg():
         encoded_image = (request.form.get("pic") + "==").encode('utf-8')
         username = request.form.get("name")
 
+
+
         id_ = username
         compressed_data = zlib.compress(encoded_image, 5)
 
@@ -198,7 +204,7 @@ def facereg():
 
         decoded_data = b64decode(uncompressed_data)
 
-        new_image_handle = open('./static/validarface/' + str(id_) + '.jpg', 'wb')
+        new_image_handle = open('./static/face/unknown-' + str(id_) + '.jpg', 'wb')
 
         new_image_handle.write(decoded_data)
         new_image_handle.close()
@@ -212,7 +218,7 @@ def facereg():
         user_face_encoding = face_recognition.face_encodings(image_of_user)[0]
 
         unknown_image = face_recognition.load_image_file(
-            './static/validarface/' + str(id_) + '.jpg')
+            './static/face/unknown-' + str(id_) + '.jpg')
         try:
 
             unknown_image = cv2.cvtColor(unknown_image, cv2.COLOR_BGR2RGB)
@@ -238,7 +244,6 @@ def facereg():
 
 
 @app.route("/facesetup", methods=["GET", "POST"])
-@login_required
 def facesetup():
     if request.method == "POST":
 
@@ -326,39 +331,28 @@ def convert_to_wav(audio_file, output_path):
         print(f"Error al convertir archivo a WAV: {e}")
         return False
     
-def login_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "user_id" in session:
-            return func(*args, **kwargs)
-        else:
-            return redirect(url_for('login'))
-    return wrapper
-
 
 @app.route('/registrarvoz')
-@login_required
 def registrarvoz():
     return render_template('RegistrarVoz.html')
-
+    
 @app.route('/uploadRegistrar', methods=['POST'])
-@login_required
 def upload_registrar():
-    # Obtener el nombre de usuario de la sesión actual
-    username = session.get('user_id')
+    # Obtener el nombre de usuario desde el formulario
+    username = request.form.get('username')
 
-    # Validar si hay un usuario en sesión
-    if username:
-        # Proceder con la lógica de grabación y almacenamiento de audio
+    # Validar si el nombre de usuario existe en la base de datos
+    if db.users.find_one({"name": username}):
+        # El usuario existe, proceder con la lógica de grabación y almacenamiento de audio
         audio_file = request.files['audio']
 
         # Convertir el archivo de audio al formato WAV antes de guardarlo
         audio_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav')
         convert_to_wav(audio_file, audio_path)
 
-        return jsonify({"message": f"Voz registrada correctamente para: {username}"})
+        return jsonify({"message": "Voz registrada correctamente : {}".format(username)})
     else:
-        return jsonify({"message": "No hay un usuario en sesión. Por favor, inicie sesión para registrar su voz."})
+        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de grabar el audio."})
 
 @app.route('/checkUserExistence')
 def check_user_existence():
@@ -394,12 +388,16 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-        if similarity > 0.8:  # Ajustar el umbral según sea necesario
-            session["user_id"] = username  # Establecer la sesión para el usuario
-        return redirect(url_for('success'))  # Redirigir al usuario a success.html
+            if similarity > 0.8:  # Ajustar el umbral según sea necesario
+                return jsonify({"message": f"Bienvenido, {username}."})
+            else:
+                return jsonify({"message": "La voz no coincide."})
+        else:
+            return jsonify({"message": "Error al procesar características de audio."})
     else:
-        return jsonify({"message": "La voz no coincide."})
+        return jsonify({"message": "Nombre de usuario no válido. Por favor, regístrese antes de iniciar sesión."})
 
 if __name__ == '__main__':
     app.run()
+
 
