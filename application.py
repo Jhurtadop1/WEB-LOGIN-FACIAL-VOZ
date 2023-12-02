@@ -25,7 +25,6 @@ import vggish_slim
 import os
 
 
-
 # Configure application
 app = Flask(__name__)
 # configure flask-socketio
