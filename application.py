@@ -109,7 +109,8 @@ def login():
 
             else:
                 return render_template("login.html", messager=3)
-
+        else:
+            return render_template("login.html", messager=4)  # Mensaje de usuario no encontrado
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -388,7 +389,7 @@ def compare_and_store_validar_voice():
 
             # Determinar si las voces coinciden o no
             if similarity > 0.8:  # Ajustar el umbral según sea necesario
-                return jsonify({"message": f"Bienvenido {username}"})
+                return jsonify({"message": f"Bienvenido, {username}."})
             else:
                 return jsonify({"message": "La voz no coincide."})
         else:
