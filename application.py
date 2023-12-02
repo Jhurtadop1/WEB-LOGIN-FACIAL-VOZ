@@ -177,12 +177,21 @@ def register():
             flash(f"Registered as {input_username}")
 
             # Redirect user to homepage
-            return redirect("index.html")
+            return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
     
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
     session.clear()
@@ -190,6 +199,8 @@ def facereg():
 
         encoded_image = (request.form.get("pic") + "==").encode('utf-8')
         username = request.form.get("name")
+
+
 
         id_ = username
         compressed_data = zlib.compress(encoded_image, 5)
@@ -235,6 +246,7 @@ def facereg():
 
     else:
         return render_template("camera.html")
+    
 
 
 @app.route("/facesetup", methods=["GET", "POST"])
@@ -326,6 +338,9 @@ def convert_to_wav(audio_file, output_path):
         print(f"Error al convertir archivo a WAV: {e}")
         return False
     
+
+
+
 def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -335,12 +350,10 @@ def login_required(func):
             return redirect(url_for('login'))
     return wrapper
 
-
 @app.route('/registrarvoz')
 @login_required
 def registrarvoz():
     return render_template('RegistrarVoz.html')
-
 @app.route('/uploadRegistrar', methods=['POST'])
 @login_required
 def upload_registrar():
@@ -396,16 +409,11 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-            if similarity > 0.8:  # Ajustar el umbral según sea necesario
-                session["user_id"] = username  # Establecer la sesión para el usuario
-                return redirect(url_for('success'))  # Redirigir al usuario a success.html
-            else:
-                return jsonify({"message": "La voz no coincide."})
-        else:
-            return jsonify({"message": "Error al extraer características de audio."})
+        if similarity > 0.8:  # Ajustar el umbral según sea necesario
+            session["user_id"] = username  # Establecer la sesión para el usuario
+        return redirect(url_for('success'))  # Redirigir al usuario a success.html
     else:
         return jsonify({"message": "La voz no coincide."})
-
-
+        
 if __name__ == '__main__':
     app.run()
