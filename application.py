@@ -382,11 +382,11 @@ def check_user_existence():
 
 @app.route('/validarvoz')
 def validarvoz():
+    session.clear()
     return render_template('ValidarVoz.html')
 
 @app.route('/compareAndStoreValidarVoice', methods=['POST'])
 def compare_and_store_validar_voice():
-    session.clear()
     # Obtener el nombre de usuario desde el formulario
     username = request.form.get('username')
 
