@@ -382,7 +382,6 @@ def check_user_existence():
 
 @app.route('/validarvoz')
 def validarvoz():
-    session.clear()
     return render_template('ValidarVoz.html')
 
 @app.route('/compareAndStoreValidarVoice', methods=['POST'])
