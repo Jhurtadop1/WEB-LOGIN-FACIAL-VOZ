@@ -186,6 +186,8 @@ def register():
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
     session.clear()
+    similarity_percentage = None  # Inicializa la variable para almacenar el porcentaje de similitud
+    
     if request.method == "POST":
 
         encoded_image = (request.form.get("pic") + "==").encode('utf-8')
@@ -223,18 +225,28 @@ def facereg():
         #  compare faces
         results = face_recognition.compare_faces(
             [user_face_encoding], unknown_face_encoding)
-        print(results)
+         # Calcula el porcentaje de similitud
+        similar_faces_count = sum(results)
+        total_faces = len(results)
+        similarity_percentage = (similar_faces_count / total_faces) * 100
+
+        # Determina un umbral para mostrar un mensaje
+        threshold = 50  # Puedes ajustar este valor según tu preferencia
+
+        if similarity_percentage >= threshold:
+            similarity_message = "Las caras son similares"
+        else:
+            similarity_message = "Las caras no son lo suficientemente similares"
 
         if results[0]:
             user_found = users.find_one({"name": id_})
             session["user_id"] = user_found["name"]
-            return render_template("success.html", username=user_found["name"])
+            return render_template("success.html", username=user_found["name"], similarity_message=similarity_message, similarity_percentage=similarity_percentage)
         else:
-            return render_template("camera.html", message=3)
-
+            return render_template("camera.html", message=3, similarity_message=similarity_message)
 
     else:
-        return render_template("camera.html")
+        return render_template("camera.html", similarity_percentage=similarity_percentage)
 
 
 @app.route("/facesetup", methods=["GET", "POST"])
