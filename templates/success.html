@@ -16,6 +16,12 @@ Success
         <h1> Biometric Login</h1>
         {% if 'user_id' in session %}
             <p>Hola {{ session['user_id'] }}</p>
+            {% if similarity_message %}
+                <p>{{ similarity_message }}</p>
+            {% endif %}
+            {% if similarity_percentage is defined %}
+                <p>Porcentaje de similitud: {{ similarity_percentage }}%</p>
+            {% endif %}
         {% else %}
             <p>No se ha iniciado sesión, la voz no coincide.</p>
         {% endif %}
