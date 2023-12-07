@@ -117,6 +117,7 @@ def login():
         return render_template("login.html")
 @app.route("/success")
 def success():
+    session.clear()
 
     return render_template("success.html")
 @app.route("/logout")
