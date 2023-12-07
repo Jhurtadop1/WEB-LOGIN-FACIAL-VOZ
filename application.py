@@ -228,7 +228,7 @@ def facereg():
          # Calcula el porcentaje de similitud
         similar_faces_count = sum(results)
         total_faces = len(results)
-        similarity_percentage = (similar_faces_count / total_faces) * 100
+        similarity_percentage = (similar_faces_count / total_faces) * 80
 
         # Determina un umbral para mostrar un mensaje
         threshold = 50  # Puedes ajustar este valor según tu preferencia
