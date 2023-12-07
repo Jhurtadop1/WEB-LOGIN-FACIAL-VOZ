@@ -117,7 +117,6 @@ def login():
         return render_template("login.html")
 @app.route("/success")
 def success():
-    
 
     return render_template("success.html")
 @app.route("/logout")
@@ -178,21 +177,12 @@ def register():
             flash(f"Registered as {input_username}")
 
             # Redirect user to homepage
-            return redirect("/")
+            return redirect("index.html")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
     
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("user_id") is None:
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated_function
-
-
 @app.route("/facereg", methods=["GET", "POST"])
 def facereg():
     session.clear()
@@ -200,8 +190,6 @@ def facereg():
 
         encoded_image = (request.form.get("pic") + "==").encode('utf-8')
         username = request.form.get("name")
-
-
 
         id_ = username
         compressed_data = zlib.compress(encoded_image, 5)
@@ -247,7 +235,6 @@ def facereg():
 
     else:
         return render_template("camera.html")
-    
 
 
 @app.route("/facesetup", methods=["GET", "POST"])
@@ -339,9 +326,6 @@ def convert_to_wav(audio_file, output_path):
         print(f"Error al convertir archivo a WAV: {e}")
         return False
     
-
-
-
 def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -351,10 +335,12 @@ def login_required(func):
             return redirect(url_for('login'))
     return wrapper
 
+
 @app.route('/registrarvoz')
 @login_required
 def registrarvoz():
     return render_template('RegistrarVoz.html')
+
 @app.route('/uploadRegistrar', methods=['POST'])
 @login_required
 def upload_registrar():
@@ -383,12 +369,10 @@ def check_user_existence():
 
 @app.route('/validarvoz')
 def validarvoz():
-    
     return render_template('ValidarVoz.html')
 
 @app.route('/compareAndStoreValidarVoice', methods=['POST'])
 def compare_and_store_validar_voice():
-    session.clear()
     # Obtener el nombre de usuario desde el formulario
     username = request.form.get('username')
 
@@ -397,14 +381,12 @@ def compare_and_store_validar_voice():
         # El usuario existe, proceder con la lógica de comparación y almacenamiento en validarvoice
         audio_file = request.files['audio']
 
-        # Ruta donde se almacenan las muestras de voz
-        audio_path = os.path.join(app.config['VALIDAR_UPLOAD_FOLDER'], f'{username}.wav')
-
-        # Guardar el archivo de audio en la carpeta asociada al usuario
-        convert_to_wav(audio_file, audio_path)
+        # Guardar el archivo de audio en la carpeta 'static/validarvoice' con el nombre del usuario
+        audio_path_validar = os.path.join(app.config['VALIDAR_UPLOAD_FOLDER'], f'{username}.wav')
+        convert_to_wav(audio_file, audio_path_validar)
 
         # Extraer características de audio de ambas grabaciones
-        features_embed_voice1 = extract_audio_features(audio_path)
+        features_embed_voice1 = extract_audio_features(audio_path_validar)
         features_embed_voice2 = extract_audio_features(os.path.join(app.config['UPLOAD_FOLDER'], f'{username}.wav'))
 
         if features_embed_voice1 is not None and features_embed_voice2 is not None:
@@ -412,11 +394,11 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-        if similarity > 0.6:  # Ajustar el umbral según sea necesario
+        if similarity > 0.7:  # Ajustar el umbral según sea necesario
             session["user_id"] = username  # Establecer la sesión para el usuario
         return redirect(url_for('success'))  # Redirigir al usuario a success.html
     else:
         return jsonify({"message": "La voz no coincide."})
-        
+
 if __name__ == '__main__':
     app.run()
