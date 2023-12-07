@@ -409,7 +409,7 @@ def compare_and_store_validar_voice():
             similarity = compare_audio_features(features_embed_voice1, features_embed_voice2)
 
             # Determinar si las voces coinciden o no
-        if similarity > 0.8:  # Ajustar el umbral según sea necesario
+        if similarity > 0.6:  # Ajustar el umbral según sea necesario
             session["user_id"] = username  # Establecer la sesión para el usuario
         return redirect(url_for('success'))  # Redirigir al usuario a success.html
     else:
