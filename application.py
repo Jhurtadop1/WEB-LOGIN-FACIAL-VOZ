@@ -177,7 +177,7 @@ def register():
             flash(f"Registered as {input_username}")
 
             # Redirect user to homepage
-            return redirect("index.html")
+            return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
