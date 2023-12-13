@@ -145,8 +145,8 @@ def register():
         elif not input_password == input_confirmation:
             return render_template("register.html", messager=3)
 
-        # Validación de la contraseña (al menos 12 caracteres, una mayúscula y un carácter especial)
-        if not (len(input_password) >= 12 and re.search(r'[A-Z]', input_password) and re.search(r'[\W_]', input_password)):
+        # Validación de la contraseña (al menos 8 caracteres, una mayúscula y un carácter especial)
+        if not (len(input_password) >= 8 and re.search(r'[A-Z]', input_password) and re.search(r'[\W_]', input_password)):
             return render_template("register.html", messager=6)
 
         user_found = users.find_one({"name": input_username})
