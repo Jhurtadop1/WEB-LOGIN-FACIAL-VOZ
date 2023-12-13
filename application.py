@@ -33,6 +33,7 @@ import re
 
 # Configure application
 app = Flask(__name__)
+cors = CORS(app)
 # configure flask-socketio
 
 # Ensure templates are auto-reloaded
