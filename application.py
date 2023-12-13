@@ -24,7 +24,7 @@ import vggish_input
 import vggish_slim
 import os
 from functools import wraps
-
+from flask_cors import CORS
 import re
 
 
