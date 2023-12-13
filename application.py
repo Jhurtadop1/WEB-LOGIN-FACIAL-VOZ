@@ -25,6 +25,7 @@ import vggish_slim
 import os
 from functools import wraps
 
+import re
 
 
 
@@ -50,9 +51,6 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
-
-
-# Custom filter
 
 
 # Configure session to use filesystem (instead of signed cookies)
@@ -133,36 +131,27 @@ def logout():
 def register():
     """Register user"""
 
-    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
-        # Assign inputs to variables
         input_username = request.form.get("username")
         input_password = request.form.get("password")
         input_confirmation = request.form.get("confirmation")
 
-        # Ensure username was submitted
         if not input_username:
             return render_template("register.html", messager=1)
-
-        # Ensure password was submitted
         elif not input_password:
             return render_template("register.html", messager=2)
-
-        # Ensure password confirmation was submitted
         elif not input_confirmation:
             return render_template("register.html", messager=4)
-
-        # Check if passwords match
         elif not input_password == input_confirmation:
             return render_template("register.html", messager=3)
 
-        # Query database for username
+        # Validación de la contraseña (al menos 12 caracteres, una mayúscula y un carácter especial)
+        if not (len(input_password) >= 12 and re.search(r'[A-Z]', input_password) and re.search(r'[\W_]', input_password)):
+            return render_template("register.html", messager=6)
+
         user_found = users.find_one({"name": input_username})
         if user_found:
             return render_template("register.html", messager=5)
-
-        # Insert new user into the database
         else:
             hashed = bcrypt.hashpw(input_password.encode('utf-8'), bcrypt.gensalt())
             user_input = {'name': input_username, 'password': hashed}
@@ -170,16 +159,11 @@ def register():
 
             new_user = users.find_one({'name': input_username})
             if new_user:
-                # Keep newly registered user logged in
                 session["user_id"] = new_user["name"]
 
-            # Flash info for the user
             flash(f"Registered as {input_username}")
-
-            # Redirect user to homepage
             return redirect("/")
 
-    # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
     
